@@ -1,0 +1,27 @@
+--- a/gtk/gtkfilechoosernativeandroid.c
++++ b/gtk/gtkfilechoosernativeandroid.c
+@@ -134,6 +134,24 @@
+                                       gdk_android_get_java_cache ()->a_intent.constructor_action,
+                                       jaction);
+ 
++  /* ACTION_CREATE_DOCUMENT needs EXTRA_TITLE: without it the provider
++   * chooses a placeholder name and loses the suggested file extension.
++   */
++  if (action == GTK_FILE_CHOOSER_ACTION_SAVE)
++    {
++      char *name = gtk_file_chooser_get_current_name ((GtkFileChooser *)self);
++      if (name && *name)
++        {
++          jstring title = gdk_android_utf8_to_java (name);
++          (*env)->CallObjectMethod (env, intent,
++                                    gdk_android_get_java_cache ()->a_intent.put_extra_string,
++                                    gdk_android_get_java_cache ()->a_intent.extra_title,
++                                    title);
++          (*env)->DeleteLocalRef (env, title);
++        }
++      g_free (name);
++    }
++
+   (*env)->CallObjectMethod (env, intent,
+                             gdk_android_get_java_cache ()->a_intent.put_extra_bool,
+                             gdk_android_get_java_cache ()->a_intent.extra_allow_multiple,

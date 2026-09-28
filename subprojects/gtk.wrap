@@ -4,6 +4,7 @@
 directory = gtk
 url = https://gitlab.gnome.org/GNOME/gtk.git
 revision = d1872a0b1f4da7fe132d41722fa7f1bf692beb92
+diff_files = gtk/android-save-filename.patch
 
 [provide]
 dependency_names = gtk4

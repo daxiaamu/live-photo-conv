@@ -228,7 +228,8 @@ jobs:
       run: |
         set -euo pipefail
         find .pixiewood/android/app/build/outputs -name '*.apk' | sort
-        VERSION="$(git describe --tags --abbrev=12 | sed 's/^v//;s/-/./g')"
+        VERSION="$(git describe --tags --abbrev=12 2>/dev/null || sed -n "s/.*version: '\([^']*\)'.*/\1/p" meson.build | head -1)"
+        VERSION="$(printf '%s' "$VERSION" | sed 's/^v//;s/-/./g')"
         for ABI in arm64-v8a x86_64 universal; do
           APK_IN="$(find .pixiewood/android/app/build/outputs/apk -path "*${ABI}*" -name '*.apk' | head -1)"
           "${ANDROID_HOME}/build-tools/${ANDROID_SDKVER}/apksigner" sign \
