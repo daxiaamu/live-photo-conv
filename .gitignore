@@ -29,3 +29,7 @@ subprojects/*.tar.xz
 subprojects/*.tar.gz
 subprojects/*.zip
 subprojects/packagecache/
+
+# Local release signing material and downloaded artifacts
+.release-signing/
+.release-artifacts/

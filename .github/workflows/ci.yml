@@ -238,6 +238,8 @@ jobs:
             --ks-key-alias "$KS_ALIAS" --key-pass "pass:$KS_ALIAS_PASS" \
             --out "live-photo-conv-${VERSION}-android-${ABI}.apk" \
             "$APK_IN"
+          "${ANDROID_HOME}/build-tools/${ANDROID_SDKVER}/apksigner" verify \
+            --verbose --print-certs "live-photo-conv-${VERSION}-android-${ABI}.apk"
         done
 
     - name: Upload APK
