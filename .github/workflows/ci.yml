@@ -214,8 +214,23 @@ jobs:
     - name: pixiewood generate
       run: ./pixiewood-tool/pixiewood generate
 
+    - name: Enable R8 for Android release
+      run: python3 build-aux/configure-android-r8.py .pixiewood/android/app
+
     - name: pixiewood build
       run: ./pixiewood-tool/pixiewood build
+
+    - name: Verify R8 output
+      run: |
+        test -s .pixiewood/android/app/build/outputs/mapping/release/mapping.txt
+        python3 build-aux/check-r8-mapping.py .pixiewood/android/app/build/outputs/mapping/release/mapping.txt
+
+    - name: Save R8 mapping and diagnostics
+      uses: actions/upload-artifact@v7
+      with:
+        name: android-r8-mapping
+        path: .pixiewood/android/app/build/outputs/mapping/release/
+        if-no-files-found: error
 
     - name: Prepare signing keystore
       run: |
@@ -291,7 +306,7 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ github.ref_name }}
-        name: ${{ github.ref_name }} — Android 中文支持
+        name: ${{ github.ref_name }} — Android 中文与 R8
         make_latest: true
         fail_on_unmatched_files: true
         files: |
@@ -299,8 +314,9 @@ jobs:
           dist/SHA256SUMS.txt
           dist/SIGNING-CERTIFICATE.txt
         body: |
-          增加并修复 Android 简体中文支持，保留上一版保存文件名修复。
+          增加并修复 Android 简体中文支持，启用 R8，保留上一版保存文件名修复。
 
+          - 启用 Java 代码压缩、优化、混淆及 Android 资源压缩，保留 GTK JNI 入口。
           - 应用名称、主要界面和确认按钮支持中文。
           - 补齐 APK 内的应用和工具包翻译资源，修复加载路径。
           - 跟随手机语言设置；切换语言后请重新启动应用。
