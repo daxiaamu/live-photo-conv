@@ -254,6 +254,14 @@ public class LivePhotoConv.Application : Adw.Application {
 
     public override void startup () {
         base.startup ();
+#if ANDROID
+        // GTK/libadwaita initialize their domains with desktop paths. Rebind
+        // after their startup, before creating any application windows.
+        foreach (var domain in new string[] { "gtk40", "gtk40-properties", "libadwaita" }) {
+            Intl.bindtextdomain (domain, Utils.get_localedir ());
+            Intl.bind_textdomain_codeset (domain, "UTF-8");
+        }
+#endif
         clear_staging ();
 
         var style_manager = Adw.StyleManager.get_default ();
@@ -297,7 +305,7 @@ public class LivePhotoConv.Application : Adw.Application {
         }
 
         var window = new Adw.ApplicationWindow (this) {
-            title = "Live Photo Converter",
+            title = _("Live Photo Converter"),
             default_width = 520,
             default_height = 750,
         };
@@ -488,13 +496,13 @@ public class LivePhotoConv.Application : Adw.Application {
 
     private void show_error_dialog (string title, string detail) {
         var dialog = new Adw.AlertDialog (title, detail);
-        dialog.add_response ("ok", "OK");
+        dialog.add_response ("ok", _("OK"));
         dialog.present (active_window);
     }
 
     private void show_about () {
         var about = new Adw.AboutDialog () {
-            application_name = "Live Photo Converter",
+            application_name = _("Live Photo Converter"),
             application_icon = "com.github.wszqkzqk.live-photo-conv",
             developer_name = "Zhou Qiankang (wszqkzqk)",
             version = VERSION,

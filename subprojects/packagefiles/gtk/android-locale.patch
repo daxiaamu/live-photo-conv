@@ -1,0 +1,44 @@
+--- a/gdk/android/glue/java/org/gtk/android/RuntimeApplication.java
++++ b/gdk/android/glue/java/org/gtk/android/RuntimeApplication.java
+@@ -37,9 +37,41 @@
+ 		System.loadLibrary("gtk-4");
+ 	}
+ 
++	// Bionic does not derive gettext's language from Android's LocaleList.
++	// Set the preference before GTK or the application initializes gettext.
++	private void configureGettextLocale() {
++		android.os.LocaleList locales = getResources().getConfiguration().getLocales();
++		java.util.ArrayList<String> languages = new java.util.ArrayList<>();
++		for (int i = 0; i < locales.size(); i++) {
++			java.util.Locale locale = locales.get(i);
++			String language = locale.getLanguage();
++			String country = locale.getCountry();
++			String script = locale.getScript();
++			if (language.isEmpty()) continue;
++			if (language.equals("en")) {
++				languages.add("C"); // English source strings take priority over fallback languages.
++				break;
++			}
++			if (language.equals("zh") && (script.equals("Hans") ||
++					(script.isEmpty() && (country.isEmpty() || country.equals("CN") || country.equals("SG"))))) {
++				languages.add("zh_CN");
++			} else {
++				languages.add(language + (country.isEmpty() ? "" : "_" + country));
++			}
++		}
++		try {
++			// C.UTF-8 is supported by Bionic and permits gettext LANGUAGE lookup.
++			android.system.Os.setenv("LC_ALL", "C.UTF-8", true);
++			android.system.Os.setenv("LANGUAGE", String.join(":", languages), true);
++		} catch (android.system.ErrnoException e) {
++			android.util.Log.w("GtkLocale", "Unable to configure gettext language", e);
++		}
++	}
++
+ 	@Override
+ 	public void onCreate() {
+ 		super.onCreate();
++		configureGettextLocale();
+ 		SystemFilesystem.writeResources(this);
+ 		startRuntime(System.mapLibraryName(getApplicationLibrary()));
+ 	}

@@ -4,7 +4,9 @@
 <component type="desktop-application" xmlns="https://specifications.freedesktop.org/metainfo/1.0">
   <id>com.github.wszqkzqk.live_photo_conv</id>
   <name>Live Photo Converter</name>
+  <name xml:lang="zh-Hans">动态照片转换器</name>
   <summary>Create, extract and repair Android Live Photos</summary>
+  <summary xml:lang="zh-Hans">制作、提取和修复 Android 动态照片</summary>
   <releases>
     <release version="@VERSION@"/>
   </releases>

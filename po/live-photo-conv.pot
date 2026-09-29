@@ -244,3 +244,11 @@ msgstr ""
 #: src/gui.vala:990 src/gui.vala:1006
 msgid "Repairing"
 msgstr ""
+
+#: src/gui.vala
+msgid "Live Photo Converter"
+msgstr ""
+
+#: src/gui.vala
+msgid "OK"
+msgstr ""

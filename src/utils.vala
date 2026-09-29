@@ -106,6 +106,13 @@ namespace LivePhotoConv.Utils {
      * Returns the effective locale directory at runtime.
      */
     public string get_localedir () {
+#if ANDROID
+        // GTK extracts APK assets to <filesDir> and exposes its share directory.
+        unowned var dirs = Environment.get_system_data_dirs ();
+        if (dirs.length > 0) {
+            return Path.build_filename (dirs[0], "locale");
+        }
+#endif
 #if WINDOWS
         var prefix = Win32.get_package_installation_directory_of_module (null);
         if (prefix != null) {

@@ -2,6 +2,11 @@ name: CI
 
 on:
   workflow_dispatch:
+    inputs:
+      android_only:
+        description: Build and publish only Android (dispatch on a release tag)
+        type: boolean
+        default: false
   push:
     branches: [ "main" ]
     tags: [ "*" ]
@@ -14,6 +19,7 @@ concurrency:
 
 jobs:
   build-archlinux:
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.android_only) }}
     name: Build Arch Linux Package
     runs-on: ubuntu-latest
     container: archlinux:latest
@@ -55,6 +61,7 @@ jobs:
         path: distros/archlinux/*.pkg.tar.zst
 
   build-flatpak:
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.android_only) }}
     name: Build Flatpak
     runs-on: ubuntu-latest
     steps:
@@ -95,6 +102,7 @@ jobs:
         path: live-photo-conv*.flatpak
 
   build-windows:
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.android_only) }}
     name: Build Windows (MSYS2 UCRT64) Package
     runs-on: windows-latest
     steps:
@@ -123,6 +131,7 @@ jobs:
         path: distros/msys2/*.pkg.tar.zst
 
   build-macos:
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.android_only) }}
     name: Build macOS Homebrew Package
     runs-on: macos-latest
     steps:
@@ -192,6 +201,7 @@ jobs:
       run: |
         git clone https://github.com/sp1ritCS/gtk-android-builder.git --branch android36 pixiewood-tool
         git clone --depth 1 https://github.com/sp1ritCS/mini-studio.git
+        git -C pixiewood-tool apply ../build-aux/pixiewood-i18n.patch
 
     - name: pixiewood prepare
       run: |
@@ -242,15 +252,65 @@ jobs:
             --verbose --print-certs "live-photo-conv-${VERSION}-android-${ABI}.apk"
         done
 
+    - name: Generate APK checksums and signer certificate
+      run: |
+        sha256sum live-photo-conv-*-android-*.apk > SHA256SUMS.txt
+        APKS=(live-photo-conv-*-android-arm64-v8a.apk)
+        "${ANDROID_HOME}/build-tools/${ANDROID_SDKVER}/apksigner" verify --print-certs \
+          "${APKS[0]}" > SIGNING-CERTIFICATE.txt
+        grep -F 'Signer #1 certificate SHA-256 digest: ea9b5ffa61ada70fa26315832cd99b1e8fb4f98d3d58c75a424c40bc4d02eb6b' SIGNING-CERTIFICATE.txt
+
+    - name: Verify Android translations
+      run: python3 build-aux/check-apk-translations.py live-photo-conv-*-android-*.apk
+
     - name: Upload APK
       uses: actions/upload-artifact@v7
       with:
         name: android-apk
-        path: live-photo-conv-*-android-*.apk
+        path: |
+          live-photo-conv-*-android-*.apk
+          SHA256SUMS.txt
+          SIGNING-CERTIFICATE.txt
+
+  release-android:
+    name: Publish Android Release
+    if: github.event_name == 'workflow_dispatch' && inputs.android_only && github.ref_type == 'tag'
+    needs: build-android
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/download-artifact@v8
+      with:
+        name: android-apk
+        path: dist
+    - name: Verify downloaded checksums
+      working-directory: dist
+      run: sha256sum --check SHA256SUMS.txt
+    - name: Publish Android release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ github.ref_name }}
+        name: ${{ github.ref_name }} — Android 中文支持
+        make_latest: true
+        fail_on_unmatched_files: true
+        files: |
+          dist/*.apk
+          dist/SHA256SUMS.txt
+          dist/SIGNING-CERTIFICATE.txt
+        body: |
+          增加并修复 Android 简体中文支持，保留上一版保存文件名修复。
+
+          - 应用名称、主要界面和确认按钮支持中文。
+          - 补齐 APK 内的应用和工具包翻译资源，修复加载路径。
+          - 跟随手机语言设置；切换语言后请重新启动应用。
+          - 支持 Android 12 及以上，大多数手机请选择 arm64-v8a APK。
+          - 沿用 v0.50.3 正式签名，可覆盖安装本仓库的上一版本。
+          - 构建中验证 APK 签名、中文资源及 SHA-256；尚未完成手机实测。
 
   release:
     name: Release
-    if: github.ref_type == 'tag'
+    if: github.ref_type == 'tag' && !inputs.android_only
     needs: [build-archlinux, build-flatpak, build-windows, build-macos, build-android]
     runs-on: ubuntu-latest
     permissions:

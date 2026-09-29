@@ -1,0 +1,11 @@
+--- a/pixiewood
++++ b/pixiewood
+@@ -738,7 +738,7 @@
+ 			my @cmd = ($cfg->{'meson'}, "install",
+ 			           "-C", "$pixiewood_dirname/bin-$arch",
+ 			           "--destdir", rel2abs("$pixiewood_dirname/root"),
+-			           "--tags", "runtime");
++			           "--tags", "runtime,i18n");
+ 			run \@cmd or die('Failed to install files');
+ 		}
+ 

@@ -35,3 +35,26 @@ git apply --check --directory=subprojects/gtk subprojects/packagefiles/gtk/andro
 ```
 
 If Meson has already applied the patch, check with `--reverse` instead.
+
+## Android localization
+
+`android-locale.patch` initializes gettext's `LANGUAGE` preference from Android's
+configuration before entering GTK. Simplified Chinese variants use `zh_CN`;
+English stops fallback to a secondary language. Changes take effect on restart.
+The application resolves catalogs relative to GTK's extracted asset data directory
+and rebinds GTK/libadwaita domains after toolkit initialization.
+
+Pixiewood must install both `runtime` and `i18n` Meson tags. After cloning the
+`android36` builder, apply the repository's build patch before running it:
+
+```sh
+git -C pixiewood-tool apply ../build-aux/pixiewood-i18n.patch
+```
+
+The Android workflow applies this patch and runs
+`python3 build-aux/check-apk-translations.py APK...` against the final APKs.
+For device checks, restart on a Simplified Chinese system and check the launcher
+name, window title, Make/Extract/Repair pages, error confirmation button and About
+dialog. Restart on an English system with Chinese as a secondary language and
+confirm English remains selected. Device validation is still required after a
+fresh APK build; Java/catalog checks alone do not prove the rendered UI.
